@@ -1,0 +1,246 @@
+---
+title: "Getting started with spagam"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with spagam}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Why spatial correction?
+
+Plant breeding and genetics experiments are conducted across a range of
+settings, from field plots and polytunnels to glasshouse benches and growth
+chambers. Regardless of the setting, spatial variation is almost always present.
+In field trials this might be soil fertility gradients, drainage patterns, or
+edge effects. On glasshouse benches it could be light gradients, temperature
+differences near heating pipes, or watering inconsistencies. This environmental
+heterogeneity has nothing to do with genotype performance, but if it is not
+accounted for, genotype rankings can be misleading and selection decisions
+suffer.
+
+Spatial correction is especially important when phenotypic data are used as
+input to genome-wide association studies (GWAS). Spatially confounded phenotypes
+inflate residual variance and reduce the power to detect true marker-trait
+associations. By removing the spatial trend before GWAS, you obtain cleaner
+genotype estimates (BLUEs or BLUPs) that give more reliable association signals
+and better control of false positives.
+
+**spagam** fits GAM-based spatial models (via `mgcv`) to separate the spatial
+trend from the genotype signal. It supports:
+
+- **Single-unit designs** (replicated or unreplicated) with BLUEs and/or BLUPs
+- **Multi-unit (joint) designs** where a single model is fitted across several
+  spatial units (e.g. multiple glasshouse benches or field blocks)
+
+Throughout this vignette we use the term "bench" to refer to any discrete
+spatial unit in an experiment, whether that is a glasshouse bench, a field
+plot, a polytunnel bay, or a growth chamber shelf. In single-unit analyses the
+bench concept does not apply; in multi-unit analyses each bench is modelled
+with its own spatial surface while genotype effects are estimated jointly.
+
+The package writes corrected genotype estimates, spatial trend surfaces,
+diagnostic plots, and model summaries to an output directory so that results are
+ready for downstream analysis or archiving.
+
+## Installation
+
+```{r install, eval = FALSE}
+# Install from GitHub
+# install.packages("remotes")
+remotes::install_github("alexd106/spagam")
+```
+
+```{r load}
+library(spagam)
+```
+
+## Input data format
+
+`correct_spatial()` expects a data frame with, at minimum:
+
+| Column | Description |
+|--------|-------------|
+| **genotype** | Genotype or entry identifier (character or factor) |
+| **row** | Row coordinate (numeric integer) |
+| **col** | Column coordinate (numeric integer) |
+| **phenotype(s)** | One or more numeric trait columns |
+| **bench** *(optional)* | Identifier for the spatial unit (bench, block, etc.) |
+
+Column names are flexible and you specify them via function arguments.
+Coordinates should be integer grid positions (1, 2, 3, ...), not metres or GPS
+coordinates.
+
+For this vignette we will use two datasets:
+
+1. The bundled `wheatdata`, a replicated wheat yield trial (single unit)
+2. A simulated multi-bench dataset generated with `simulate_field_trial()`
+
+### Wheat data (replicated, single unit)
+
+```{r wheat-data}
+data(wheatdata)
+str(wheatdata)
+```
+
+### Simulated data (unreplicated, multi-bench)
+
+```{r sim-data}
+sim <- simulate_field_trial(
+  n_bench           = 2,
+  n_rows            = 10,
+  n_cols            = 20,
+  spatial_type      = 5,
+  spatial_intensity = 25,
+  save_csv          = FALSE,
+  seed              = 42
+)
+str(sim$data)
+```
+
+We can visualise the raw spatial pattern across benches:
+
+```{r sim-heatmaps, fig.width = 10, fig.height = 4}
+plot_bench_heatmap(sim$data, pheno = "BNI", bench_col = "Bench",
+                   bench = "Bench1", bench_label = "Bench 1")
+```
+
+## Example 1: Replicated single-unit design
+
+The `wheatdata` trial has 107 genotypes across 3 replicates in a 22 x 15 grid.
+We fit a spatial model and extract BLUEs (best linear unbiased estimates):
+
+```{r single-bench, results = "hide", message = FALSE, warning = FALSE}
+out_single <- correct_spatial(
+  data          = wheatdata,
+  pheno_cols    = "yield",
+  geno_col      = "geno",
+  row_col       = "row",
+  col_col       = "col",
+  estimate_type = "BLUEs",
+  output_dir    = file.path(tempdir(), "wheat_output")
+)
+```
+
+### What comes back?
+
+`correct_spatial()` returns a list (invisibly) and writes files to `output_dir`.
+
+```{r single-result}
+names(out_single)
+head(out_single$blues)
+head(out_single$model_summary)
+```
+
+### Output files
+
+The output directory now contains:
+
+```{r single-files}
+list.files(file.path(tempdir(), "wheat_output"))
+```
+
+| File | Contents |
+|------|----------|
+| `BLUEs.csv` | Corrected genotype estimates and standard errors |
+| `spatial_trends.csv` | Per-plot spatial smooth and total spatial effect |
+| `model_summary.csv` | Residual SD, effective degrees of freedom, convergence |
+| `diagnostics_*.png` | 6-panel diagnostic plot (observed, spatial trend, residuals, variograms, QQ) |
+| `row_col_re_*.png` | Row and column random effect magnitudes |
+| `blues_distribution.png` | Histogram of corrected estimates |
+| `spatial_surfaces.png` | Heatmap of the fitted spatial smooth |
+
+### Diagnostic plots
+
+The 6-panel diagnostic plot is the primary tool for checking model adequacy:
+
+- **Top row:** Observed values | Fitted spatial trend | Residuals
+- **Bottom row:** Variogram of raw data | Variogram of residuals | QQ plot
+
+A well-fitting model should show a flat residual variogram (spatial
+autocorrelation removed) and residuals that follow the QQ line.
+
+## Example 2: Unreplicated multi-bench design
+
+For multi-bench experiments, provide the `bench_col` argument. The package fits
+a joint GAM with bench-specific spatial surfaces:
+
+```{r multi-bench, results = "hide", message = FALSE, warning = FALSE}
+out_multi <- correct_spatial(
+  data          = sim$data,
+  pheno_cols    = "BNI",
+  geno_col      = "Genotype",
+  row_col       = "Row",
+  col_col       = "Col",
+  bench_col     = "Bench",
+  estimate_type = "BLUEs",
+  output_dir    = file.path(tempdir(), "sim_output")
+)
+```
+
+### Results
+
+```{r multi-result}
+head(out_multi$blues)
+out_multi$model_summary
+```
+
+The model summary now has one row per bench, so you can compare residual
+variation and effective degrees of freedom across benches.
+
+### Output files
+
+```{r multi-files}
+list.files(file.path(tempdir(), "sim_output"))
+```
+
+Diagnostic and random effect plots are produced per bench, so you can assess
+model fit for each bench independently.
+
+## BLUPs (single-unit only)
+
+For single-unit designs you can also extract BLUPs (best linear unbiased
+predictors), where genotype is treated as a random effect. This shrinks
+estimates towards the population mean and is useful when the number of
+genotypes is large relative to replication. BLUPs are often preferred as input
+to GWAS because the shrinkage reduces noise in the phenotypic values.
+
+```{r blups, results = "hide", message = FALSE, warning = FALSE}
+out_blups <- correct_spatial(
+  data          = wheatdata,
+  pheno_cols    = "yield",
+  geno_col      = "geno",
+  row_col       = "row",
+  col_col       = "col",
+  estimate_type = "both",
+  output_dir    = file.path(tempdir(), "wheat_blups")
+)
+```
+
+```{r blups-result}
+head(out_blups$blups)
+```
+
+Note: BLUPs are not supported in multi-bench mode. Attempting
+`estimate_type = "BLUPs"` with `bench_col` set will raise an informative error.
+
+## Tips
+
+- **Automatic basis dimensions:** By default, the number of B-spline knots is
+  chosen adaptively (roughly half the unique positions per axis, bounded to
+  5 to 20). Override with `k_row` / `k_col` if the spatial surface looks
+  under-smoothed or over-smoothed.
+- **Multiple traits:** Pass several column names to `pheno_cols` to correct
+  multiple traits in one call. Each trait gets its own model, diagnostics, and
+  output columns.
+- **Reproducibility:** All output CSVs and plots are written to `output_dir`,
+  making it straightforward to archive results alongside analysis scripts.
