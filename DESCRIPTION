@@ -1,0 +1,27 @@
+Package: spagam
+Title: GAM-Based Spatial Correction for Field Trials
+Version: 0.1.0
+Authors@R: person("Alex", "Douglas", role = c("aut", "cre"),
+    email = "a.douglas@abdn.ac.uk")
+Description: Fits mgcv-based GAM spatial correction models for unreplicated
+    field trials. Supports single-bench designs (BLUEs and BLUPs) and joint
+    multi-bench designs (BLUEs only). Outputs corrected genotype estimates,
+    spatial trend surfaces, diagnostic plots, and model summaries. Includes
+    simulation utilities for generating realistic trial data.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.0.0)
+Imports:
+    mgcv,
+    ggplot2 (>= 3.3.0),
+    patchwork,
+    tools
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr

@@ -1,0 +1,5 @@
+^\.git$
+^\.gitignore$
+^TODO\.md$
+^\.Rproj\.user$
+^.*\.Rproj$
