@@ -85,7 +85,7 @@ plot_heatmap <- function(data, row_col, col_col, value_col,
 
 #' Plot empirical semivariogram
 #'
-#' @param vgram data.frame(dist, sv) from [empirical_semivariogram()]
+#' @param vgram data.frame(dist, sv) from `empirical_semivariogram()`
 #' @param title Plot title
 #' @return ggplot object
 #' @keywords internal

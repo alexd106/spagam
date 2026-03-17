@@ -13,8 +13,8 @@ _Last updated: 2026-03-17_
 - [x] Rename `run_spatial_gam()` → `correct_spatial()`
 - [x] Copy example data to `inst/extdata/BNI_simulation.csv`
 - [x] Initialise git repo: `git init && git add . && git commit -m "initial scaffold"`
-- [ ] Create GitHub repo and push
-- [ ] Run `devtools::document()` to generate `NAMESPACE` and `man/` pages
+- [x] Create GitHub repo and push
+- [ ] Run ``devtools::document() to generate `NAMESPACE` and `man/` pages
 - [ ] Run `devtools::check()` and resolve any warnings or notes
 
 ---

@@ -21,7 +21,7 @@
 #' @param bench_col     Bench column name; `NULL` triggers the single-bench model
 #' @param estimate_type One of `"BLUEs"` (default), `"BLUPs"`, or `"both"`.
 #'   BLUPs and `"both"` require single-bench mode (`bench_col = NULL`).
-#' @param k_row         Basis dimension for rows; `NULL` = auto via [adaptive_nseg()]
+#' @param k_row         Basis dimension for rows; `NULL` = auto (roughly half the unique row positions, bounded to \[5, 20\])
 #' @param k_col         Basis dimension for columns; `NULL` = auto
 #' @param rda_object    Object name to extract from `.rda` file; `NULL` = first data frame
 #'

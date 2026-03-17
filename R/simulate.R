@@ -103,7 +103,7 @@ compute_spatial <- function(grid, n_rows, n_cols, spatial_type,
 #' @param n_cols            columns per bench; `n_rows * n_cols` genotypes simulated
 #' @param mean_pheno        grand mean of the phenotype
 #' @param sd_geno           SD of true genotype effects
-#' @param spatial_type      integer 1-7; see [compute_spatial()] for details
+#' @param spatial_type      integer 1-7; see `compute_spatial()` for details
 #' @param spatial_intensity peak magnitude of the spatial gradient in phenotype units
 #' @param spatial_scale     bandwidth multiplier (default 1)
 #' @param sd_error          plot-level random noise SD
