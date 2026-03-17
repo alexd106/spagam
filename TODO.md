@@ -25,8 +25,8 @@ _Last updated: 2026-03-17
 
 ## Phase 2 — Tests
 
-- [ ] `test-input.R` — `adaptive_nseg()` bounds (n < 10, n = 40, n = 100)
-- [ ] `test-correct.R` — `correct_spatial()` rejects non-data-frame and zero-row input
+- [x] `test-input.R` — `adaptive_nseg()` bounds (n < 10, n = 40, n = 100)
+- [x] `test-input.R` — `correct_spatial()` rejects non-data-frame and zero-row input
 - [ ] `test-simulate.R` — `simulate_field_trial()` dimensions, column names,
       reproducibility via seed, `save_csv = FALSE` path
 - [ ] `test-simulate.R` — all 7 spatial types run without error
