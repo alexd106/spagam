@@ -14,8 +14,8 @@ _Last updated: 2026-03-17_
 - [x] Copy example data to `inst/extdata/BNI_simulation.csv`
 - [x] Initialise git repo: `git init && git add . && git commit -m "initial scaffold"`
 - [x] Create GitHub repo and push
-- [ ] Run ``devtools::document() to generate `NAMESPACE` and `man/` pages
-- [ ] Run `devtools::check()` and resolve any warnings or notes
+- [x] Run ``devtools::document() to generate `NAMESPACE` and `man/` pages
+- [x] Run `devtools::check()` and resolve any warnings or notes
 
 ---
 

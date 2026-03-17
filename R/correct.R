@@ -5,14 +5,14 @@
 
 #' Run mgcv-based spatial correction end to end
 #'
-#' Reads data, validates columns, fits the spatial GAM (single- or
-#' multi-bench), writes CSV outputs and diagnostic plots to `output_dir`,
-#' and returns the key results invisibly.
+#' Fits the spatial GAM (single- or multi-bench), writes CSV outputs and
+#' diagnostic plots to `output_dir`, and returns the key results invisibly.
 #'
 #' Single-bench mode fits one GAM per trait and supports both BLUEs and BLUPs.
 #' Multi-bench mode fits a joint GAM across all benches and supports BLUEs only.
 #'
-#' @param data_file     Path to input file (`.csv`, `.rda`, or `.RData`)
+#' @param data          A data frame containing phenotype, genotype, and
+#'   coordinate columns.
 #' @param pheno_cols    Character vector of phenotype column names
 #' @param output_dir    Output directory; created automatically if absent
 #' @param geno_col      Genotype identifier column name
@@ -23,27 +23,27 @@
 #'   BLUPs and `"both"` require single-bench mode (`bench_col = NULL`).
 #' @param k_row         Basis dimension for rows; `NULL` = auto (roughly half the unique row positions, bounded to \[5, 20\])
 #' @param k_col         Basis dimension for columns; `NULL` = auto
-#' @param rda_object    Object name to extract from `.rda` file; `NULL` = first data frame
 #'
 #' @return Invisibly: list with elements `blues`, `blups`, `spatial_trends`,
 #'   `model_summary`
 #'
 #' @examples
 #' \dontrun{
+#' df  <- read.csv(system.file("extdata", "BNI_simulation.csv", package = "spagam"))
 #' out <- correct_spatial(
-#'   data_file  = system.file("extdata", "BNI_simulation.csv", package = "spagam"),
-#'   pheno_cols = "BNI",
-#'   geno_col   = "Genotype",
-#'   row_col    = "Row",
-#'   col_col    = "Col",
-#'   bench_col  = "Bench",
-#'   output_dir = tempdir()
+#'   data        = df,
+#'   pheno_cols  = "BNI",
+#'   geno_col    = "Genotype",
+#'   row_col     = "Row",
+#'   col_col     = "Col",
+#'   bench_col   = "Bench",
+#'   output_dir  = tempdir()
 #' )
 #' }
 #'
 #' @export
 correct_spatial <- function(
-  data_file,
+  data,
   pheno_cols,
   output_dir    = "output/gam",
   geno_col      = "geno",
@@ -52,16 +52,17 @@ correct_spatial <- function(
   bench_col     = NULL,
   estimate_type = "BLUEs",
   k_row         = NULL,
-  k_col         = NULL,
-  rda_object    = NULL
+  k_col         = NULL
 ) {
 
   # --------------------------------------------------------------------------
-  # Data loading & validation
+  # Input validation
   # --------------------------------------------------------------------------
-  cat("-- Loading data ----------------------------------------------------------\n")
-  data <- read_input(data_file, rda_object = rda_object)
-  cat("  File:", data_file, "\n")
+  if (!is.data.frame(data))
+    stop("`data` must be a data frame, not ", class(data)[1], ".", call. = FALSE)
+  if (nrow(data) == 0)
+    stop("`data` has zero rows.", call. = FALSE)
+  cat("-- Validating input ------------------------------------------------------\n")
   cat("  Dimensions:", nrow(data), "rows x", ncol(data), "columns\n")
 
   required_cols <- c(geno_col, row_col, col_col, pheno_cols)
