@@ -185,8 +185,6 @@ simulate_field_trial <- function(n_bench           = 4,
     effects_file <- file.path(output_dir, paste0(pheno_name, "_true_effects.csv"))
     write.csv(sim_df,       data_file,    row.names = FALSE)
     write.csv(true_effects, effects_file, row.names = FALSE)
-    cat("Data written to:         ", data_file, "\n")
-    cat("True effects written to: ", effects_file, "\n")
   }
 
   list(data = sim_df, true_effects = true_effects, pheno_name = pheno_name)
@@ -330,7 +328,5 @@ plot_all_bench_heatmaps <- function(dfr,
   total_h <- panel_height * nrow_panels + 0.5
 
   ggplot2::ggsave(output_png, composite, width = total_w, height = total_h, dpi = 150)
-  cat("Heatmap saved to:", output_png, "\n")
-
   invisible(composite)
 }

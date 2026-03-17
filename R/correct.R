@@ -62,9 +62,6 @@ correct_spatial <- function(
     stop("`data` must be a data frame, not ", class(data)[1], ".", call. = FALSE)
   if (nrow(data) == 0)
     stop("`data` has zero rows.", call. = FALSE)
-  cat("-- Validating input ------------------------------------------------------\n")
-  cat("  Dimensions:", nrow(data), "rows x", ncol(data), "columns\n")
-
   required_cols <- c(geno_col, row_col, col_col, pheno_cols)
   if (!is.null(bench_col)) required_cols <- c(required_cols, bench_col)
   missing_cols  <- setdiff(required_cols, names(data))
@@ -97,19 +94,10 @@ correct_spatial <- function(
   if (is_multibench) {
     bench_ids <- sort(unique(data[[bench_col]]))
     n_bench   <- length(bench_ids)
-    cat("  Design: multi-bench (", n_bench, "benches )\n")
-    cat("  Benches:", paste(bench_ids, collapse = ", "), "\n")
   } else {
     n_bench   <- 1L
     bench_ids <- "single"
-    cat("  Design: single bench\n")
   }
-
-  n_geno <- length(unique(data[[geno_col]]))
-  cat("  Genotypes:", n_geno, "\n")
-  cat("  Grid:", n_unique_row, "rows x", n_unique_col, "cols\n")
-  cat("  Traits:", paste(pheno_cols, collapse = ", "), "\n")
-  cat("  Estimate type:", estimate_type, "\n")
 
   if (!is.null(bench_col) && estimate_type %in% c("BLUPs", "both")) {
     stop("Multi-bench BLUPs are not yet supported. ",
@@ -118,24 +106,17 @@ correct_spatial <- function(
          call. = FALSE)
   }
 
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-    cat("  Created output directory:", output_dir, "\n")
-  }
+  if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 
   # --------------------------------------------------------------------------
   # Model fitting
   # --------------------------------------------------------------------------
-  cat("\n-- Fitting models --------------------------------------------------------\n")
-
   all_blues_list <- list()
   all_blups_list <- list()
   spatial_rows   <- list()
   summary_rows   <- list()
 
   for (pheno in pheno_cols) {
-    cat("  Trait:", pheno, "\n")
-
     if (!is_multibench) {
       # Single-bench path
       result <- fit_mgcv_bench(
@@ -182,7 +163,6 @@ correct_spatial <- function(
         stringsAsFactors = FALSE
       )
 
-      cat("    Saving diagnostics...\n")
       diag_plot <- tryCatch(
         make_diagnostic_plots(data, result, pheno, row_col, col_col, ""),
         error = function(e) { warning("Diagnostic plot failed: ", e$message); NULL }
@@ -190,7 +170,6 @@ correct_spatial <- function(
       if (!is.null(diag_plot)) {
         out_png <- file.path(output_dir, paste0("diagnostics_", pheno, "_single.png"))
         ggplot2::ggsave(out_png, diag_plot, width = 12, height = 8, dpi = 150)
-        cat("    Saved:", out_png, "\n")
       }
 
       re_plot <- tryCatch(
@@ -200,7 +179,6 @@ correct_spatial <- function(
       if (!is.null(re_plot)) {
         out_png <- file.path(output_dir, paste0("row_col_re_", pheno, "_single.png"))
         ggplot2::ggsave(out_png, re_plot, width = 8, height = 4, dpi = 150)
-        cat("    Saved:", out_png, "\n")
       }
 
     } else {
@@ -267,7 +245,6 @@ correct_spatial <- function(
           out_png <- file.path(output_dir,
                                paste0("diagnostics_", pheno, "_", safe_bench, ".png"))
           ggplot2::ggsave(out_png, diag_plot, width = 12, height = 8, dpi = 150)
-          cat("    Saved:", out_png, "\n")
         }
 
         re_plot <- tryCatch(
@@ -280,7 +257,6 @@ correct_spatial <- function(
           out_png <- file.path(output_dir,
                                paste0("row_col_re_", pheno, "_", safe_bench, ".png"))
           ggplot2::ggsave(out_png, re_plot, width = 8, height = 4, dpi = 150)
-          cat("    Saved:", out_png, "\n")
         }
       }
     }
@@ -289,8 +265,6 @@ correct_spatial <- function(
   # --------------------------------------------------------------------------
   # CSV outputs
   # --------------------------------------------------------------------------
-  cat("\n-- Writing CSV outputs ---------------------------------------------------\n")
-
   blues_df <- NULL
   blups_df <- NULL
   sp_df    <- NULL
@@ -301,7 +275,6 @@ correct_spatial <- function(
                        all_blues_list)
     out_path <- file.path(output_dir, "BLUEs.csv")
     write.csv(blues_df, out_path, row.names = FALSE)
-    cat("  BLUEs:", out_path, "(", nrow(blues_df), "genotypes )\n")
   }
 
   if (length(all_blups_list) > 0) {
@@ -309,29 +282,23 @@ correct_spatial <- function(
                        all_blups_list)
     out_path <- file.path(output_dir, "BLUPs.csv")
     write.csv(blups_df, out_path, row.names = FALSE)
-    cat("  BLUPs:", out_path, "(", nrow(blups_df), "genotypes )\n")
   }
 
   if (length(spatial_rows) > 0) {
     sp_df    <- do.call(rbind, spatial_rows)
     out_path <- file.path(output_dir, "spatial_trends.csv")
     write.csv(sp_df, out_path, row.names = FALSE)
-    cat("  Spatial trends:", out_path, "(", nrow(sp_df), "rows )\n")
   }
 
   if (length(summary_rows) > 0) {
     sum_df   <- do.call(rbind, summary_rows)
     out_path <- file.path(output_dir, "model_summary.csv")
     write.csv(sum_df, out_path, row.names = FALSE)
-    cat("  Model summary:", out_path, "\n")
-    print(sum_df)
   }
 
   # --------------------------------------------------------------------------
   # Summary plots
   # --------------------------------------------------------------------------
-  cat("\n-- Saving summary plots --------------------------------------------------\n")
-
   if (length(all_blues_list) > 0) {
     blues_long <- do.call(rbind, lapply(names(all_blues_list), function(ph) {
       df <- all_blues_list[[ph]]
@@ -352,7 +319,6 @@ correct_spatial <- function(
     out_png <- file.path(output_dir, "blues_distribution.png")
     ggplot2::ggsave(out_png, p_dens,
                     width = max(6, 4 * length(all_blues_list)), height = 5, dpi = 150)
-    cat("  BLUE distribution:", out_png, "\n")
   }
 
   if (!is.null(sp_df) && !is.null(sum_df)) {
@@ -384,12 +350,8 @@ correct_spatial <- function(
                       width  = 5 * n_col_grid,
                       height = 4 * n_rows_grid,
                       dpi = 150)
-      cat("  Spatial surfaces:", out_png, "\n")
     }
   }
-
-  cat("\n-- Done ------------------------------------------------------------------\n")
-  cat("  Results written to:", output_dir, "\n")
 
   invisible(list(
     blues          = blues_df,

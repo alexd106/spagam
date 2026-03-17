@@ -1,6 +1,6 @@
 # spagam TODO
 
-_Last updated: 2026-03-17_
+_Last updated: 2026-03-17
 
 ---
 
@@ -16,13 +16,17 @@ _Last updated: 2026-03-17_
 - [x] Create GitHub repo and push
 - [x] Run ``devtools::document() to generate `NAMESPACE` and `man/` pages
 - [x] Run `devtools::check()` and resolve any warnings or notes
+- [x] Drop `.rda`/`.RData` input support; `correct_spatial()` now accepts a data frame directly
+- [x] Remove `read_input()` and stale `man/read_input.Rd`
+- [x] Fix unresolved roxygen links to internal functions (`adaptive_nseg`, `empirical_semivariogram`, `compute_spatial`)
+- [x] Create `data/wheatdata.rda` from `inst/extdata/wheatdata.csv`
 
 ---
 
 ## Phase 2 — Tests
 
-- [ ] `test-input.R` — `read_input()` handles CSV, RDA, missing file, bad type
 - [ ] `test-input.R` — `adaptive_nseg()` bounds (n < 10, n = 40, n = 100)
+- [ ] `test-correct.R` — `correct_spatial()` rejects non-data-frame and zero-row input
 - [ ] `test-simulate.R` — `simulate_field_trial()` dimensions, column names,
       reproducibility via seed, `save_csv = FALSE` path
 - [ ] `test-simulate.R` — all 7 spatial types run without error
