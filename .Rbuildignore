@@ -1,5 +1,6 @@
 ^\.git$
 ^\.gitignore$
+^\.claude$
 ^TODO\.md$
 ^\.Rproj\.user$
 ^.*\.Rproj$

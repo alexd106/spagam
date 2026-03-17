@@ -189,7 +189,6 @@ make_diagnostic_plots <- function(bench_data, result, pheno,
   pd <- bench_data[, c(row_col, col_col), drop = FALSE]
   pd$obs     <- bench_data[[pheno]]
   pd$spatial <- if (!is.null(result$spatial_smooth)) result$spatial_smooth
-                else if (!is.null(result$spatial))   result$spatial
                 else NA_real_
   pd$resid   <- if (!is.null(result$residuals)) result$residuals else NA_real_
 

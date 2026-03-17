@@ -131,11 +131,21 @@ fit_mgcv_bench <- function(bench_data, pheno, geno_col, row_col, col_col,
       names(res$blups)[1] <- geno_col
 
       if (is.null(res$fitted)) {
-        terms_pred    <- predict(m, type = "terms")
-        te_col        <- grep("^te\\(", colnames(terms_pred), value = TRUE)
-        res$spatial   <- as.numeric(terms_pred[, te_col[1]])
-        res$fitted    <- as.numeric(fitted(m))
-        res$residuals <- as.numeric(residuals(m))
+        terms_pred <- predict(m, type = "terms")
+        te_col     <- grep("^te\\(", colnames(terms_pred), value = TRUE)
+        row_re_col <- grep("^s\\(row_f\\)", colnames(terms_pred), value = TRUE)
+        col_re_col <- grep("^s\\(col_f\\)", colnames(terms_pred), value = TRUE)
+
+        smooth_val <- as.numeric(terms_pred[, te_col[1]])
+        row_re_val <- if (length(row_re_col)) as.numeric(terms_pred[, row_re_col[1]]) else rep(0, nrow(bench_data))
+        col_re_val <- if (length(col_re_col)) as.numeric(terms_pred[, col_re_col[1]]) else rep(0, nrow(bench_data))
+
+        res$spatial_smooth <- smooth_val
+        res$spatial_total  <- smooth_val + row_re_val + col_re_val
+        res$row_re         <- row_re_val
+        res$col_re         <- col_re_val
+        res$fitted         <- as.numeric(fitted(m))
+        res$residuals      <- as.numeric(residuals(m))
         if (is.na(res$edf_spatial))
           res$edf_spatial <- sum(m$edf[grep("^te\\(", names(m$edf))])
       }

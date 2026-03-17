@@ -16,4 +16,11 @@
 #' @import ggplot2
 #' @import patchwork
 #' @importFrom mgcv gam
+#' @importFrom stats aggregate as.formula coef fitted predict quantile
+#'   residuals rnorm sd setNames vcov
+#' @importFrom utils write.csv
 NULL
+
+## NSE bindings used in ggplot2 aes() / after_stat() --------------------------
+utils::globalVariables(c("density", "dist", "effect", "level", "resid",
+                         "sv", "value"))
